@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import GameKit
 
 @main
 struct Banger_App: App {
