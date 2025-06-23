@@ -243,6 +243,11 @@ enum TurnPhase: String, Codable {
 
 @Observable
 class GameState: Codable {
+    
+    enum CodingKeys: String, CodingKey {
+        case players, currentPlayerIndex, phase, turnPhase, deck, discardPile
+        case sheriffIndex, winner, bangPlayedThisTurn, lastUpdateTimestamp
+    }
     var players: [BangPlayer] = []
     var currentPlayerIndex: Int = 0
     var phase: GamePhase = .setup
@@ -253,6 +258,10 @@ class GameState: Codable {
     var winner: Role?
     var bangPlayedThisTurn: Bool = false
     var lastUpdateTimestamp: TimeInterval = Date().timeIntervalSince1970
+    
+    init() {
+        // Default initializer for @Observable
+    }
     
     var currentPlayer: BangPlayer? {
         guard currentPlayerIndex < players.count else { return nil }
@@ -321,5 +330,34 @@ class GameState: Codable {
             killer?.equipment.removeAll()
             killer?.weapon = nil
         }
+    }
+    
+    // MARK: - Codable Implementation
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.players = try container.decode([BangPlayer].self, forKey: .players)
+        self.currentPlayerIndex = try container.decode(Int.self, forKey: .currentPlayerIndex)
+        self.phase = try container.decode(GamePhase.self, forKey: .phase)
+        self.turnPhase = try container.decode(TurnPhase.self, forKey: .turnPhase)
+        self.deck = try container.decode([Card].self, forKey: .deck)
+        self.discardPile = try container.decode([Card].self, forKey: .discardPile)
+        self.sheriffIndex = try container.decode(Int.self, forKey: .sheriffIndex)
+        self.winner = try container.decodeIfPresent(Role.self, forKey: .winner)
+        self.bangPlayedThisTurn = try container.decode(Bool.self, forKey: .bangPlayedThisTurn)
+        self.lastUpdateTimestamp = try container.decode(TimeInterval.self, forKey: .lastUpdateTimestamp)
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(players, forKey: .players)
+        try container.encode(currentPlayerIndex, forKey: .currentPlayerIndex)
+        try container.encode(phase, forKey: .phase)
+        try container.encode(turnPhase, forKey: .turnPhase)
+        try container.encode(deck, forKey: .deck)
+        try container.encode(discardPile, forKey: .discardPile)
+        try container.encode(sheriffIndex, forKey: .sheriffIndex)
+        try container.encodeIfPresent(winner, forKey: .winner)
+        try container.encode(bangPlayedThisTurn, forKey: .bangPlayedThisTurn)
+        try container.encode(lastUpdateTimestamp, forKey: .lastUpdateTimestamp)
     }
 }

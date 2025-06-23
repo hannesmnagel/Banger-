@@ -176,7 +176,7 @@ class BangGameEngine {
         gameState.bangPlayedThisTurn = true
         
         // Check for Slab the Killer - requires 2 Missed!
-        let missedRequired = (player.character?.name == "Slab the Killer") ? 2 : 1
+        let _ = (player.character?.name == "Slab the Killer") ? 2 : 1
         
         // Target can respond with Missed! or Barrel
         return .success(

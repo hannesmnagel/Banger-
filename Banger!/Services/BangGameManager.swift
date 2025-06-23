@@ -11,7 +11,7 @@ import SwiftUI
 
 @MainActor
 @Observable
-class BangGameManager: NSObject, GKMatchDelegate, @MainActor GKLocalPlayerListener {
+class BangGameManager: NSObject, GKMatchDelegate, GKLocalPlayerListener {
     
     // MARK: - Properties
     var matchAvailable = false
@@ -339,11 +339,13 @@ class BangGameManager: NSObject, GKMatchDelegate, @MainActor GKLocalPlayerListen
     }
     
     // MARK: - GKMatchDelegate
-    func match(_ match: GKMatch, didReceive data: Data, fromRemotePlayer player: GKPlayer) {
-        handleNetworkMessage(data, from: player)
+    nonisolated func match(_ match: GKMatch, didReceive data: Data, fromRemotePlayer player: GKPlayer) {
+        Task { @MainActor in
+            handleNetworkMessage(data, from: player)
+        }
     }
     
-    func match(_ match: GKMatch, player: GKPlayer, didChange state: GKPlayerConnectionState) {
+    nonisolated func match(_ match: GKMatch, player: GKPlayer, didChange state: GKPlayerConnectionState) {
         switch state {
         case .connected:
             print("Player connected: \(player.displayName)")
@@ -357,23 +359,23 @@ class BangGameManager: NSObject, GKMatchDelegate, @MainActor GKLocalPlayerListen
         }
     }
     
-    func match(_ match: GKMatch, didFailWithError error: Error?) {
+    nonisolated func match(_ match: GKMatch, didFailWithError error: Error?) {
         print("Match failed with error: \(error?.localizedDescription ?? "Unknown error")")
-        resetGame()
+        Task { @MainActor in
+            resetGame()
+        }
     }
     
     // MARK: - GKLocalPlayerListener
-    func player(_ player: GKPlayer, didAccept invite: GKInvite) {
+    nonisolated func player(_ player: GKPlayer, didAccept invite: GKInvite) {
         // Handle invite acceptance by creating a match from the invite
         print("Player accepted invite from: \(player.displayName)")
         
         // Create match from invite
-        Task {
+        Task { @MainActor in
             do {
                 let match = try await GKMatchmaker.shared().match(for: invite)
-                await MainActor.run {
-                    self.startMatch(match)
-                }
+                self.startMatch(match)
             } catch {
                 print("Failed to create match from invite: \(error.localizedDescription)")
             }
